@@ -34,14 +34,14 @@ def get_session():
 
 router = APIRouter()
 
-@router.get("/products/", response_model=List[Products])
+@router.get("/products", response_model=List[Products])
 def get_users(session: Session = Depends(get_session)):
     """Retrieves all product from the database."""
     # Use the session to query the database
     users = session.query(Products).all()
     return users
 
-@router.post("/products/", response_model=Products)
+@router.post("/products", response_model=Products)
 def create_users(product: Products, session: Session = Depends(get_session)):
     """create new product into the database."""
     # Use the session to query the database
@@ -50,7 +50,7 @@ def create_users(product: Products, session: Session = Depends(get_session)):
     session.refresh(product)
     return product
 
-@router.put("/products/{product_id}", response_model=Products)
+@router.put("/products", response_model=Products)
 def update_product(product_id: int, data_update: ProductUpdate, session: Session = Depends(get_session)):
     """update product in the database."""
     # Use the session to query the database
@@ -66,7 +66,7 @@ def update_product(product_id: int, data_update: ProductUpdate, session: Session
     return {"message": "update user data success"}
 
 
-@router.delete("/products/{product_id}", response_model=Products)
+@router.delete("/products", response_model=Products)
 def delete_users(product_id: int, session: Session = Depends(get_session)):
     """delete user from the database."""
     # Use the session to query the database
@@ -79,4 +79,4 @@ def delete_users(product_id: int, session: Session = Depends(get_session)):
 
     return {"message": "delete success"}
 
-app.include_router(router, tags=["products"])
+app.include_router(router, tags=["products"], prefix="/api/v1")

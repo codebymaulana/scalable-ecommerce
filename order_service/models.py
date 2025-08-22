@@ -10,8 +10,19 @@ class Orders(SQLModel, table=True):
     order_status: str = Field(default="pending", index=True)
     total_amount: float = Field(default=0.0, index=True)
     payment_status: str = Field(default="unpaid", index=True)
+    payment_id: int = Field(default=None, index=True)
     created_at: Optional[str] = Field(default=None, index=True)
     updated_at: Optional[str] = Field(default=None, index=True)
+
+
+class OrderUpdate(SQLModel):
+    """
+    Represents an update to an order in the order service database.
+    """
+    order_status: Optional[str] = None
+    payment_status: Optional[str] = None
+    updated_at: Optional[str] = None
+
 
 class OrderItem(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

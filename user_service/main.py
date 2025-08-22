@@ -34,14 +34,14 @@ def get_session():
 
 router = APIRouter()
 
-@router.get("/users/", response_model=List[Users])
+@router.get("/users", response_model=List[Users])
 def get_users(session: Session = Depends(get_session)):
     """Retrieves all users from the database."""
     # Use the session to query the database
     users = session.query(Users).all()
     return users
 
-@router.post("/users/", response_model=Users)
+@router.post("/users", response_model=Users)
 def create_users(users: Users, session: Session = Depends(get_session)):
     """create new user into the database."""
     # Use the session to query the database
@@ -50,7 +50,7 @@ def create_users(users: Users, session: Session = Depends(get_session)):
     session.refresh(users)
     return users
 
-@router.put("/users/{user_id}", response_model=Users)
+@router.put("/users", response_model=Users)
 def update_users(user_id: int, data_update: UsersUpdate, session: Session = Depends(get_session)):
     """update user in the database."""
     # Use the session to query the database
@@ -66,7 +66,7 @@ def update_users(user_id: int, data_update: UsersUpdate, session: Session = Depe
     return {"message": "update user data success"}
 
 
-@router.delete("/users/{user_id}", response_model=Users)
+@router.delete("/users}", response_model=Users)
 def delete_users(user_id: int, session: Session = Depends(get_session)):
     """delete user from the database."""
     # Use the session to query the database
@@ -79,4 +79,4 @@ def delete_users(user_id: int, session: Session = Depends(get_session)):
 
     return {"message": "delete success"}
 
-app.include_router(router, tags=["users"])
+app.include_router(router, tags=["users"], prefix="/api/v1")

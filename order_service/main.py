@@ -2,7 +2,7 @@ from fastapi import FastAPI, APIRouter, Depends, HTTPException
 from sqlmodel import SQLModel, create_engine, Session
 from contextlib import asynccontextmanager
 from typing import List
-from models import Orders, OrderItem
+from models import Orders, OrderItem, OrderUpdate
 import os
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./database.db")
@@ -77,6 +77,22 @@ def place_order(order_data: Orders, session: Session = Depends(get_session)):
 
     return new_order
 
+@router.put("/order", response_model=Orders)
+def update_product(order_id: int, data_update: OrderUpdate, session: Session = Depends(get_session)):
+    """update order in the database."""
+    # Use the session to query the database
+    order_data = session.get(Orders, order_id)
+    if not order_data:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    order_update = data_update.model_dump(exclude_unset=True)
+    order_data.sqlmodel_update(order_update)
+    session.add(order_data)
+    session.commit()
+    session.refresh(order_data)
+
+    return {"message": "Update order data success"}
+
 @router.delete("/order", response_model=Orders)
 def delete_cart(order_id: int, session: Session = Depends(get_session)):
     """delete order from the database."""
@@ -90,4 +106,4 @@ def delete_cart(order_id: int, session: Session = Depends(get_session)):
 
     return {"message": "Delete order success"}
 
-app.include_router(router, tags=["order"])
+app.include_router(router, tags=["order"], prefix="/api/v1")
