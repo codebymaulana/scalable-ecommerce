@@ -2,7 +2,7 @@ from fastapi import FastAPI, APIRouter, Depends, HTTPException
 from sqlmodel import SQLModel, create_engine, Session
 from contextlib import asynccontextmanager
 from typing import List
-from models import Orders, OrderItem, OrderUpdate
+from models import Orders, OrderItem, OrderUpdate, OrderRequest
 import os
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./database.db")
@@ -35,47 +35,35 @@ def get_session():
 router = APIRouter()
 
 @router.get("/order", response_model=List[Orders])
-def get_users(user_id: int, session: Session = Depends(get_session)):
-    """Retrieves list of order from the database, filtered by user_id"""
+def get_all_orders(session: Session = Depends(get_session)):
+    """Retrieves list of order from the database"""
     # Use the session to query the database
     query = session.query(Orders)
-    if user_id is not None:
-        query = query.filter(Orders.user_id == user_id)
     order_list = query.all()
     return order_list
 
 @router.post("/order", response_model=Orders)
-def place_order(order_data: Orders, session: Session = Depends(get_session)):
+def place_order(order_data: OrderRequest, session: Session = Depends(get_session)):
     """place order into the database."""
     try:
-        # Count total amount from order items
-        for item in order_data.items:
-            subtotal = item.quantity * item.price
-            total_amount += subtotal
+        total_amount = sum(item.price * item.quantity for item in order_data.items)
 
-        new_order = Orders(
-            user_id=order_data.user_id,
-            total_amount=total_amount,
-            order_status="pending"
-        )
+        new_order = Orders(user_id=order_data.user_id, total_amount=total_amount)
         session.add(new_order)
-        session.flush()
-
-        order_item = OrderItem(
-            order_id=new_order.id,
-            product_id=item.product_id,
-            quantity=item.quantity,
-            price=item.price,
-            subtotal=subtotal
-        )
-        session.add(order_item)
         session.commit()
-        session.refresh(new_order)
+
+        for item in order_data.items:
+            order_item = OrderItem(order_id=new_order.id, product_id=item.product_id, quantity=item.quantity, price=item.price)
+            session.add(order_item)
+            session.commit()
+
+        order_data = session.get(Orders, new_order.id)
+
     except Exception as e:
         session.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to place order: {str(e)}")
 
-    return new_order
+    return order_data
 
 @router.put("/order", response_model=Orders)
 def update_product(order_id: int, data_update: OrderUpdate, session: Session = Depends(get_session)):
