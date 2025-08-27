@@ -66,22 +66,27 @@ def place_order(order_data: OrderRequest, session: Session = Depends(get_session
     return order_data
 
 @router.put("/order", response_model=Orders)
-def update_product(order_id: int, data_update: OrderUpdate, session: Session = Depends(get_session)):
+def update_product(data_update: OrderUpdate, session: Session = Depends(get_session)):
     """update order in the database."""
     # Use the session to query the database
-    order_data = session.get(Orders, order_id)
+    order_data = session.get(Orders, data_update.order_id)
     if not order_data:
         raise HTTPException(status_code=404, detail="Order not found")
 
-    order_update = data_update.model_dump(exclude_unset=True)
-    order_data.sqlmodel_update(order_update)
-    session.add(order_data)
-    session.commit()
-    session.refresh(order_data)
+    try:
+        order_update = data_update.model_dump(exclude_unset=True)
+        order_data.sqlmodel_update(order_update)
+        session.add(order_data)
+        session.commit()
+        session.refresh(order_data)
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to update order: {str(e)}")
 
-    return {"message": "Update order data success"}
 
-@router.delete("/order", response_model=Orders)
+    return order_data
+
+@router.delete("/order/{order_id}", response_model=Orders)
 def delete_cart(order_id: int, session: Session = Depends(get_session)):
     """delete order from the database."""
     # Use the session to query the database

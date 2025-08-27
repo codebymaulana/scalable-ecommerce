@@ -1,6 +1,18 @@
+from enum import Enum
 from typing import Optional, List
 from sqlmodel import SQLModel, Field
 from datetime import datetime
+
+
+class OrderStatus(str, Enum):
+    pending = "pending"
+    processing = "processing"
+    shipping = "shipping"
+    completed = "completed"
+
+class PaymentStatus(str, Enum):
+    unpaid = "unpaid"
+    paid = "paid"
 
 class Orders(SQLModel, table=True):
     """
@@ -8,20 +20,20 @@ class Orders(SQLModel, table=True):
     """
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(index=True)
-    order_status: str = Field(default="pending", index=True)
+    order_status: OrderStatus = Field(default=OrderStatus.pending, index=True)
     total_amount: float = Field(default=0.0, index=True)
-    payment_status: str = Field(default="unpaid", index=True)
+    payment_status: PaymentStatus = Field(default=PaymentStatus.unpaid, index=True)
     created_at: datetime = Field(default=datetime.utcnow(), index=True)
-    updated_at: Optional[str] = Field(default=None, index=True)
+    updated_at: Optional[datetime] = Field(default=None,sa_column_kwargs={"onupdate": datetime.utcnow}, index=True)
 
 
 class OrderUpdate(SQLModel):
     """
     Represents an update to an order in the order service database.
     """
-    order_status: Optional[str] = None
-    payment_status: Optional[str] = None
-    updated_at: Optional[str] = None
+    order_id: int
+    order_status: Optional[OrderStatus] = None
+    payment_status: Optional[PaymentStatus] = None
 
 
 class OrderItem(SQLModel, table=True):
