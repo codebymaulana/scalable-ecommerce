@@ -53,7 +53,10 @@ def place_order(order_data: OrderRequest, session: Session = Depends(get_session
         session.commit()
 
         for item in order_data.items:
-            order_item = OrderItem(order_id=new_order.id, product_id=item.product_id, quantity=item.quantity, price=item.price)
+            order_item = OrderItem(order_id=new_order.id,
+                                   product_id=item.product_id,
+                                   quantity=item.quantity,
+                                   price=item.price)
             session.add(order_item)
             session.commit()
 
